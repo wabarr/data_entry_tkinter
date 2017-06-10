@@ -1,0 +1,6 @@
+project title: Dikika Data Entry
+database path: "DIK-database.sqlite3"
+fields:
+  name:
+    datatype: character
+
