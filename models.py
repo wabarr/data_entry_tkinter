@@ -8,4 +8,4 @@ class BaseRecord(Model):
         database = db
 
 class Record(BaseRecord):
-    name = CharField()
+    name = CharField(constraints=[Check("name != ''")])
