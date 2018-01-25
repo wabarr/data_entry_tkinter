@@ -1,6 +1,21 @@
-project title: Dikika Data Entry
-database path: "DIK-database.sqlite3"
+project title: Fieldwork Database Manager
+database path: testDB.sqlite3
 fields:
   name:
     datatype: character
-
+    nullable: True
+  date:
+    datatype: datetime
+    nullable: True
+  count:
+    datatype: integer
+    nullable: True
+  lastmodified:
+    datatype: datetime
+    nullable: True
+  x:
+    datatype: decimal
+    nullable: True
+  y:
+    datatype: decimal
+    nullable: True
