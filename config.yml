@@ -1,8 +1,9 @@
 project title: Fieldwork Database Manager
 database path: testDB.sqlite3
+records_per_page: 10
 fields:
   name:
-    datatype: character
+    datatype: text
     nullable: True
   date:
     datatype: datetime
@@ -18,4 +19,7 @@ fields:
     nullable: True
   y:
     datatype: decimal
+    nullable: True
+  photo:
+    datatype: text
     nullable: True

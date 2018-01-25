@@ -14,7 +14,7 @@ class Record(BaseRecord):
 
 # dynamically add fields to the Record class based on the parsed config file
 for name, valuedict in config.options["fields"].iteritems():
-    if valuedict["datatype"]=="character":
+    if valuedict["datatype"]=="text":
         theField = CharField(null=valuedict["nullable"])
         theField.add_to_class(Record, name)
     elif valuedict["datatype"]=="integer":
