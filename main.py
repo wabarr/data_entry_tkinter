@@ -105,18 +105,20 @@ class DataEntry():
        add.grid(row=self.headerrows+self.records_per_page+1, column=len(self.fieldnames))
 
     def add_record(self):
-        try:
-           new_record = Record()
-           for field in self.fieldnames:
-              if self.entry_form_values[field].get():
-                setattr(new_record, field, self.entry_form_values[field].get())
-           validator = ModelValidator(new_record)
-           validator.validate()
+
+        new_record = Record()
+        for field in self.fieldnames:
+           if self.entry_form_values[field].get():
+             setattr(new_record, field, self.entry_form_values[field].get())
+        validator = ModelValidator(new_record)
+        if validator.validate():
            new_record.save()
-        except peewee.IntegrityError as e:
-           mesagebox.showerror(e.strerror)
-        #need to validate datatypes in data entry!
-        self.populate_list_items()
+           self.populate_list_items()
+        else:
+           errorlist = []
+           for key, value in validator.errors.items():
+             errorlist.append("Entry for '%s' %s" %(key, value.lower()))
+           messagebox.showerror("Invalid Data Values", "\n".join(errorlist))
 
     def delete_record(self, theID):
         theRecord = Record.get(Record.id == theID)
