@@ -1,7 +1,9 @@
-from Tkinter import *
-import tkMessageBox
+from tkinter import *
+from tkinter import messagebox
+
 from models import Record, db
-from peewee import IntegrityError
+import peewee
+from peewee_validates import ModelValidator
 from config import Config
 import os
 
@@ -64,7 +66,7 @@ class DataEntry():
 
     def create_db_tables(self):
         if Record.table_exists():
-            tkMessageBox.showerror("Table exists", "The Record table already exists. You blast that db. ")
+            messagebox.showerror("Table exists", "The Record table already exists. You blast that db. ")
         else:
             db.create_tables([Record])
 
@@ -81,7 +83,7 @@ class DataEntry():
             for field in enumerate(self.fieldnames):
                 theText = getattr(record[1], field[1])
                 if not theText:
-                    theText = 'NA'
+                    theText = '-'
                 Label(self.items, text=theText, wraplength=100, font=("Arial", 12 ), padx=10, pady=2).grid(
                     row=record[0] + self.headerrows, column=field[0])
             delete = Label(self.items, image=trashcan)
@@ -108,15 +110,17 @@ class DataEntry():
            for field in self.fieldnames:
               if self.entry_form_values[field].get():
                 setattr(new_record, field, self.entry_form_values[field].get())
+           validator = ModelValidator(new_record)
+           validator.validate()
            new_record.save()
-        except IntegrityError as e:
-           tkMessageBox.showerror(e.strerror)
+        except peewee.IntegrityError as e:
+           mesagebox.showerror(e.strerror)
         #need to validate datatypes in data entry!
         self.populate_list_items()
 
     def delete_record(self, theID):
         theRecord = Record.get(Record.id == theID)
-        if tkMessageBox.askokcancel("Delete this record?", "Do you really want to delete record ID = %s?" %(theID)):
+        if messagebox.askokcancel("Delete this record?", "Do you really want to delete record ID = %s?" %(theID)):
             theRecord.delete_instance()
             self.populate_list_items()
 
