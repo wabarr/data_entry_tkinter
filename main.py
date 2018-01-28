@@ -6,7 +6,7 @@ import peewee
 from peewee_validates import ModelValidator
 from config import Config
 import os
-
+from tkinter.ttk import Combobox
 
 class DataEntry():
 
@@ -20,11 +20,14 @@ class DataEntry():
         for fieldname in Record._meta.sorted_field_names:
             if not fieldname == "id":
                 self.fieldnames.append(fieldname)
-        self.records_per_page = config.options["records_per_page"]
+
+        #default number of records per page, this can be altered
+        self.records_per_page = 10
 
         self.create_db_tables()
         self.draw_list_page()
         self.populate_list_items()
+
 
     def draw_list_page(self):
 
@@ -51,7 +54,10 @@ class DataEntry():
         #header row
         for field in enumerate(self.fieldnames):
             Grid.columnconfigure(self.items, field[0], weight=1)
-            Label(self.items, text=field[1], font=("Arial", 14, 'bold')).grid(row=2, column=field[0])
+            cell = Entry(self.items)
+            cell.grid(row=2, column=field[0])
+            cell.insert(0,field[1])
+            cell.config(justify="center", state="readonly", font=("Arial", 14, "bold"))
 
 
         #row for delete icon
@@ -78,19 +84,22 @@ class DataEntry():
         dir_path = os.path.dirname(os.path.realpath(__file__))
         trashcan = PhotoImage(file=os.path.join(dir_path, "assets/icons/trashcan.gif"))
 
-        for record in enumerate(Record.select().limit(self.records_per_page)):
+        for record in enumerate(Record.select().limit(int(self.records_per_page))):
 
             for field in enumerate(self.fieldnames):
                 theText = getattr(record[1], field[1])
                 if not theText:
                     theText = '-'
-                Label(self.items, text=theText, wraplength=100, font=("Arial", 12 ), padx=10, pady=2).grid(
-                    row=record[0] + self.headerrows, column=field[0])
+                cell = Entry(self.items)
+                cell.grid(row=record[0] + self.headerrows, column=field[0])
+                cell.insert(0, theText)
+                cell.config(justify="center", state="readonly", font=("Arial", 12))
             delete = Label(self.items, image=trashcan)
             delete.image = trashcan
             delete.bind("<Button-1>",lambda e, record=record : self.delete_record(theID=record[1].id))
-            delete.grid(row=record[0] + self.headerrows, column=len(self.fieldnames), sticky=N+S+E+W, padx=3, pady=1)
+            delete.grid(row=record[0] + self.headerrows, column=len(self.fieldnames), sticky=N+S+E+W, padx=1, pady=1)
         self.draw_data_entry_form()
+        self.draw_nrow_selector()
 
     def draw_data_entry_form(self):
        #self.items.grid(row=self.headerrows + self.records_per_page + 1, column=0)
@@ -98,11 +107,12 @@ class DataEntry():
        self.entry_form_values = {}
        for field in enumerate(self.fieldnames):
            self.entry_form_values.update({field[1]:StringVar()})
-           Entry(self.items, textvariable=self.entry_form_values[field[1]]).\
-               grid(row=self.headerrows+self.records_per_page+1, column=field[0], padx=1, pady=2)
+           cell = Entry(self.items, textvariable=self.entry_form_values[field[1]])
+           cell.grid(row=self.headerrows+self.records_per_page+1, column=field[0], padx=1, pady=1)
+           cell.config(font=("Arial", 12))
        add = Label(self.items, text="+")
        add.bind("<Button-1>", lambda e: self.add_record())
-       add.grid(row=self.headerrows+self.records_per_page+1, column=len(self.fieldnames))
+       add.grid(row=self.headerrows+self.records_per_page+1, sticky=N+S+E+W, column=len(self.fieldnames))
 
     def add_record(self):
 
@@ -117,14 +127,30 @@ class DataEntry():
         else:
            errorlist = []
            for key, value in validator.errors.items():
-             errorlist.append("Entry for '%s' %s" %(key, value.lower()))
-           messagebox.showerror("Invalid Data Values", "\n".join(errorlist))
+             errorlist.append("Error in field '%s': %s" %(key, value))
+           messagebox.showerror("Invalid Data", "\n".join(errorlist))
 
     def delete_record(self, theID):
         theRecord = Record.get(Record.id == theID)
         if messagebox.askokcancel("Delete this record?", "Do you really want to delete record ID = %s?" %(theID)):
             theRecord.delete_instance()
             self.populate_list_items()
+
+    def draw_nrow_selector(self):
+
+        def set_records_per_page(n):
+            self.records_per_page = n
+            self.populate_list_items()
+
+        Label(self.items, text="Display Records").grid(row=1000, column=0)
+        nRows = StringVar()
+        nRows.trace("w", lambda a, b, c: set_records_per_page(int(nRows.get())))
+        combobox = Combobox(self.items, textvariable=nRows)
+        combobox.grid(row=1001, column=0)
+        combobox.config(justify="center")
+        combobox["values"] = ("10", "20", "30", "40", "50")
+
+
 
 
 root = Tk()
