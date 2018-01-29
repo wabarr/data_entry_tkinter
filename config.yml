@@ -1,6 +1,6 @@
 project title: Fieldwork Database Manager
 database path: testDB.sqlite3
-
+records_per_page: 25
 # you cannot include a field called id.  One will be made automatically for you
 fields:
   name:
