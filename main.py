@@ -6,7 +6,7 @@ import peewee
 from peewee_validates import ModelValidator
 from config import Config
 import os
-from tkinter.ttk import Separator
+from tkinter.ttk import Separator, Notebook
 
 class DataEntry():
 
@@ -20,15 +20,22 @@ class DataEntry():
             if not fieldname == "id":
                 self.fieldnames.append(fieldname)
 
+        self.tab1 = Frame(Notebook)
+        self.tab2 = Frame(Notebook)
+        Notebook.add(self.tab1, text="list view")
+        Notebook.add(self.tab2, text="data entry")
+        Notebook.grid(row=0, column=0)
+
         self.create_db_tables()
         self.draw_list_page()
         self.populate_list_items()
         self.draw_footer()
+        self.draw_data_entry_form()
 
 
     def draw_list_page(self):
 
-        self.search_bar=Frame(self.master)
+        self.search_bar=Frame(self.tab1)
         self.search_bar.grid(row=0, column=0, sticky=N+S+E+W)
         searchquery = StringVar()
 
@@ -63,18 +70,11 @@ class DataEntry():
 
 
         #make the items frame
-        self.items = Frame(self.master, bg="white")
+        self.items = Frame(self.tab1, bg="white")
         self.items.grid(row=1, column=0, sticky=N+S+E+W)
 
     def setup_items_frame(self):
-        #self.headerrows = 3  # how many total headerrorws are there in the items frame?
-        #header row
-        for field in enumerate(self.fieldnames):
-            Grid.columnconfigure(self.items, field[0], weight=1)
-            cell = Label(self.items,  text=field[1], font=("Arial", 14, "bold"))
-            cell.grid(row=2, column=field[0])
-
-
+        self.make_header_row(self.items)
         #row for delete icon
         Grid.columnconfigure(self.items, len(self.fieldnames), weight=1)
 
@@ -128,21 +128,27 @@ class DataEntry():
             delete = Label(self.items, text="-")
             delete.bind("<Button-1>",lambda e, record=record : self.delete_record(theID=record[1].id))
             delete.grid(row=record[0] + 4, column=len(self.fieldnames), sticky=N+S+E+W, padx=1, pady=1)
-        self.draw_data_entry_form()
+        Separator(self.items, orient=HORIZONTAL).grid(row=999, columnspan=len(self.fieldnames), sticky="ew", pady=4)
         self.draw_footer(query=query)
 
-    def draw_data_entry_form(self):
+    def make_header_row(self, frame, row=2):
+        for field in enumerate(self.fieldnames):
+            Grid.columnconfigure(frame, field[0], weight=1)
+            cell = Label(frame,  text=field[1], font=("Arial", 14, "bold"))
+            cell.grid(row=row, column=field[0])
 
+    def draw_data_entry_form(self):
+       self.make_header_row(self.tab2, row=0)
        self.entry_form_values = {}
        for field in enumerate(self.fieldnames):
            self.entry_form_values.update({field[1]:StringVar()})
-           cell = Entry(self.items, textvariable=self.entry_form_values[field[1]])
-           cell.grid(row=self.records_per_page+3, column=field[0], padx=1, pady=1)
+           cell = Entry(self.tab2, textvariable=self.entry_form_values[field[1]])
+           cell.grid(row=1, column=field[0], padx=1, pady=1)
            cell.config(font=("Arial", 12))
-       add = Label(self.items, text="+")
+       add = Label(self.tab2, text="+")
        add.bind("<Button-1>", lambda e: self.add_record())
-       add.grid(row=self.records_per_page+3, sticky=N+S+E+W, column=len(self.fieldnames))
-       Separator(self.items, orient=HORIZONTAL).grid(row=999, columnspan=len(self.fieldnames), sticky="ew", pady=4)
+       add.grid(row=1, sticky=N+S+E+W, column=len(self.fieldnames))
+
 
 
     def add_record(self):
@@ -177,7 +183,7 @@ class DataEntry():
             for item in self.footer.winfo_children():
                 item.destroy()
         except AttributeError:
-            self.footer = Frame(self.master)
+            self.footer = Frame(self.tab1)
             self.footer.grid(row=1001, column=0)
         if totalRecords == queriedRecords:
             Label(self.footer, text="%d total records" %(totalRecords,)).grid(row=0, column=0)
@@ -197,6 +203,7 @@ class DataEntry():
         nextpage.bind("<Button-1>", next_page )
 
 root = Tk()
+Notebook = Notebook(root)
 
 
 config = Config()
