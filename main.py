@@ -109,8 +109,6 @@ class DataEntry():
             item.destroy()
         self.setup_items_frame()
 
-        #dir_path = os.path.dirname(os.path.realpath(__file__))
-        #trashcan = PhotoImage(file=os.path.join(dir_path, "assets/icons/trashcan.gif"))
         for record in enumerate(query.order_by(orderfield).limit(self.records_per_page)):
 
             for field in enumerate(self.fieldnames):
@@ -121,16 +119,14 @@ class DataEntry():
                 cell.grid(row=record[0] + 4, column=field[0])
                 cell.insert(0, theText)
                 cell.config(justify="center", state="readonly", font=("Arial", 12))
-            #delete = Label(self.items, image=trashcan)
-            #delete.image = trashcan
+
             delete = Label(self.items, text="-")
             delete.bind("<Button-1>",lambda e, record=record : self.delete_record(theID=record[1].id))
             delete.grid(row=record[0] + 4, column=len(self.fieldnames), sticky=N+S+E+W, padx=1, pady=1)
         self.draw_data_entry_form()
-        #self.draw_nrow_selector()
+        self.draw_footer(query=query)
 
     def draw_data_entry_form(self):
-       #self.items.grid(row=1 + self.records_per_page + 3, column=0)
 
        self.entry_form_values = {}
        for field in enumerate(self.fieldnames):
@@ -168,36 +164,19 @@ class DataEntry():
             self.populate_list_items()
             self.draw_footer()
 
-    # def draw_nrow_selector(self):
-    #
-    #     def set_records_per_page(n):
-    #         self.records_per_page = n
-    #         self.populate_list_items()
-    #         self.draw_footer()
-    #
-    #     Label(self.items, text="Display Records").grid(row=1000, column=0)
-    #     self.nRows = StringVar()
-    #     self.nrows = "10"
-    #     self.nRows.trace("w", lambda a, b, c: set_records_per_page(int(self.nRows.get())))
-    #     # combobox = Combobox(self.items, textvariable=self.nRows)
-    #     # combobox.config(justify="center")
-    #     # combobox["values"] = ("10", "20", "30", "40", "50")
-    #     # combobox.grid(row=1001, column=0)
-    #     #combobox.set("10")
-
-    def draw_footer(self):
-        totalRecords = Record.select().count()
+    def draw_footer(self, query=Record.select()):
+        totalRecords = query.count()
         totalPages = math.ceil(totalRecords/self.records_per_page)
-        self.footer = Frame(self.master)
-        self.footer.grid(row=1001, column=0)
+        try:
+            for item in self.footer.winfo_children():
+                item.destroy()
+        except AttributeError:
+            self.footer = Frame(self.master)
+            self.footer.grid(row=1001, column=0)
         Label(self.footer, text="Showing %d of %d records" %(self.records_per_page,totalRecords,)).grid(row=0, column=0)
         Label(self.footer, text="<").grid(row=0, column=1)
         Label(self.footer, text="page %d of %d" % (1, totalPages)).grid(row=0, column=2)
         Label(self.footer, text=">").grid(row=0, column=3)
-
-
-
-
 
 root = Tk()
 
