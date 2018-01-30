@@ -104,12 +104,17 @@ class DataEntry():
         else:
             db.create_tables([Record])
 
-    def populate_list_items(self, query = Record.select(), orderfield=Record.id):
+    def populate_list_items(self, query = Record.select(), orderfield=Record.id, currentpage=1):
         for item in self.items.winfo_children():
             item.destroy()
         self.setup_items_frame()
 
-        for record in enumerate(query.order_by(orderfield).limit(self.records_per_page)):
+        if currentpage == 0:
+            self.currentpage = 1
+        else:
+            self.currentpage = currentpage #for paginated search results
+
+        for record in enumerate(query.order_by(orderfield).limit(self.records_per_page).paginate(self.currentpage, self.records_per_page)):
 
             for field in enumerate(self.fieldnames):
                 theText = getattr(record[1], field[1])
@@ -165,18 +170,31 @@ class DataEntry():
             self.draw_footer()
 
     def draw_footer(self, query=Record.select()):
-        totalRecords = query.count()
-        totalPages = math.ceil(totalRecords/self.records_per_page)
+        totalRecords = Record.select().count()
+        queriedRecords = query.count()
+        totalPages = math.ceil(queriedRecords/self.records_per_page)
         try:
             for item in self.footer.winfo_children():
                 item.destroy()
         except AttributeError:
             self.footer = Frame(self.master)
             self.footer.grid(row=1001, column=0)
-        Label(self.footer, text="Showing %d of %d records" %(self.records_per_page,totalRecords,)).grid(row=0, column=0)
-        Label(self.footer, text="<").grid(row=0, column=1)
-        Label(self.footer, text="page %d of %d" % (1, totalPages)).grid(row=0, column=2)
-        Label(self.footer, text=">").grid(row=0, column=3)
+        if totalRecords == queriedRecords:
+            Label(self.footer, text="%d total records" %(totalRecords,)).grid(row=0, column=0)
+        else:
+            Label(self.footer, text="Showing %d matching records (of %d total records)" % (queriedRecords, totalRecords,)).grid(row=0, column=0)
+        previouspage = Label(self.footer, text="<")
+        previouspage.grid(row=0, column=1)
+        Label(self.footer, text="page %d of %d" % (self.currentpage, totalPages)).grid(row=0, column=2)
+        nextpage = Label(self.footer, text=">")
+        nextpage.grid(row=0, column=3)
+
+        def previous_page(*args):
+            self.populate_list_items(query=query, currentpage=self.currentpage - 1)
+        def next_page(*args):
+            self.populate_list_items(query=query, currentpage=self.currentpage + 1)
+        previouspage.bind("<Button-1>", previous_page )
+        nextpage.bind("<Button-1>", next_page )
 
 root = Tk()
 
