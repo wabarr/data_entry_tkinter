@@ -28,43 +28,38 @@ class DataEntry():
 
     def draw_list_page(self):
 
-        # self.itemsLabel = Frame(self.master)
-        # self.itemsLabel.grid(row=0, column=0)
-        # Grid.columnconfigure(self.itemsLabel, 0, weight=1)
-        # Label(self.itemsLabel, text="Items in database", font=("Arial", 20, 'bold')).grid(row=0,column=0)
-
-        # self.add_new = Frame(self.master)
-        # self.add_new.grid(row=1, column=0)
-        # Grid.columnconfigure(self.add_new, 0, weight=1)
-        # Grid.columnconfigure(self.add_new, 1, weight=1)
-        # Button(self.add_new, text="Add Record", command=self.add_record).grid(row=1, column=0)
-        # self.nameValue = StringVar()
-        # Entry(self.add_new, textvariable=self.nameValue).grid(row=1, column=2)
-
         self.search_bar=Frame(self.master)
         self.search_bar.grid(row=0, column=0, sticky=N+S+E+W)
         searchquery = StringVar()
-        #searchquery.set("")
-        def callback(*args):
-            ## currently works, but assumes that fieldnames pertain only to
-            ## text fields
-            querystring=searchquery.get()
-            fieldnames = ["name", "photo"]
-            modelname = "Record"
-            wherestring = "%%%s%%" % (querystring,)
-            clauses = []
-            for fieldname in fieldnames:
-                clauses.append("%s.%s ** '%s'" % (modelname, fieldname, wherestring))
-            fullquery = " | ".join(clauses)
-            rs = Record.select().where(eval(fullquery))
-            self.populate_list_items(query=rs)
-        searchbox = Entry(self.search_bar, textvariable=searchquery)
-        searchbox.grid(row=0,column=0, sticky=N+S+E+W)
-        #searchbutton = Button(self.search_bar, text="Search")
-        #searchbutton.grid(row=0, column=1, sticky=N+S+E+W)
-        #searchbutton.bind("<Button 1>", callback)
-        searchquery.trace("w", callback)
 
+        def search(*args):
+            self.update_recordset(querystring=searchquery.get())
+
+        def getready4query(*args):
+            searchbox.delete(0, END)
+            searchbox.config(foreground="black")
+
+        searchbox = Entry(self.search_bar, textvariable=searchquery, foreground="grey")
+        searchbox.grid(row=0,column=1, sticky=N+S+E+W)
+        searchbox.bind("<Return>", search)
+        searchbox.insert(0, "Search")
+        searchbox.bind("<FocusIn>", getready4query)
+
+        searchbutton = Button(self.search_bar, text="Search")
+        searchbutton.grid(row=0, column=3, sticky=N+S+E+W)
+        searchbutton.bind("<Button 1>", search)
+
+
+        def clearcallback(*args):
+            self.populate_list_items()
+            searchbox.delete(0, END)
+            searchbox.config(foreground="grey")
+            searchbox.insert(0, "Search")
+            clearbutton.focus_set()
+
+        clearbutton = Button(self.search_bar, text="Clear")
+        clearbutton.grid(row=0, column=4, sticky=N + S + E + W)
+        clearbutton.bind("<Button 1>", clearcallback)
 
 
         #make the items frame
@@ -78,8 +73,6 @@ class DataEntry():
             Grid.columnconfigure(self.items, field[0], weight=1)
             cell = Label(self.items,  text=field[1], font=("Arial", 14, "bold"))
             cell.grid(row=2, column=field[0])
-            #cell.insert(0,field[1])
-            #cell.config(justify="center", state="readonly",)
 
 
         #row for delete icon
@@ -92,8 +85,18 @@ class DataEntry():
         #draw the detail page for a particular instance of the Record class given by pk
         pass
 
-    def do_query(self):
-        pass
+    def update_recordset(self, querystring, modelname="Record"):
+        if querystring == "":
+            self.populate_list_items()
+        else:
+            fieldnames = ["name", "photo"]
+            wherestring = "%%%s%%" % (querystring,)
+            clauses = []
+            for fieldname in fieldnames:
+                clauses.append("%s.%s ** '%s'" % (modelname, fieldname, wherestring))
+            fullquery = " | ".join(clauses)
+            rs = Record.select().where(eval(fullquery))
+            self.populate_list_items(query=rs)
 
     def create_db_tables(self):
         if Record.table_exists():
@@ -133,11 +136,11 @@ class DataEntry():
        for field in enumerate(self.fieldnames):
            self.entry_form_values.update({field[1]:StringVar()})
            cell = Entry(self.items, textvariable=self.entry_form_values[field[1]])
-           cell.grid(row=self.records_per_page+2, column=field[0], padx=1, pady=1)
+           cell.grid(row=self.records_per_page+3, column=field[0], padx=1, pady=1)
            cell.config(font=("Arial", 12))
        add = Label(self.items, text="+")
        add.bind("<Button-1>", lambda e: self.add_record())
-       add.grid(row=self.records_per_page+2, sticky=N+S+E+W, column=len(self.fieldnames))
+       add.grid(row=self.records_per_page+3, sticky=N+S+E+W, column=len(self.fieldnames))
        Separator(self.items, orient=HORIZONTAL).grid(row=999, columnspan=len(self.fieldnames), sticky="ew", pady=4)
 
 
