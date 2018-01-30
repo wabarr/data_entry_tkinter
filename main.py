@@ -7,6 +7,7 @@ from peewee_validates import ModelValidator
 from config import Config
 import os
 from tkinter.ttk import Separator, Notebook
+from datetime import datetime
 
 class DataEntry():
 
@@ -114,6 +115,12 @@ class DataEntry():
         else:
             self.currentpage = currentpage #for paginated search results
 
+        def format_time(input):
+            try:
+                return(datetime.strftime(input, "%Y-%m-%d %H:%M:%S"))
+            except TypeError:
+                return(input)
+
         for record in enumerate(query.order_by(orderfield).limit(self.records_per_page).paginate(self.currentpage, self.records_per_page)):
 
             for field in enumerate(self.fieldnames):
@@ -122,7 +129,7 @@ class DataEntry():
                     theText = '-'
                 cell = Entry(self.items)
                 cell.grid(row=record[0] + 4, column=field[0])
-                cell.insert(0, theText)
+                cell.insert(0, format_time(theText))
                 cell.config(justify="center", state="readonly", font=("Arial", 12))
 
             delete = Label(self.items, text="-")
