@@ -16,13 +16,13 @@ class Record(BaseRecord):
 for name, valuedict in config.options["fields"].items():
     if valuedict["datatype"]=="text":
         theField = CharField(null=valuedict["nullable"])
-        theField.add_to_class(Record, name)
+        # theField.add_to_class(Record, name)
     elif valuedict["datatype"]=="integer":
         theField = IntegerField(null=valuedict["nullable"])
-        theField.add_to_class(Record, name)
+        # theField.add_to_class(Record, name)
     elif valuedict["datatype"]=="decimal":
         theField = DecimalField(null=valuedict["nullable"])
-        theField.add_to_class(Record, name)
+        # theField.add_to_class(Record, name)
     elif valuedict["datatype"]=="datetime":
         theField = DateTimeField(null=valuedict["nullable"])
-        theField.add_to_class(Record, name)
+        # theField.add_to_class(Record, name)

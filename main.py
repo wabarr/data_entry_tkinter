@@ -1,4 +1,8 @@
-from tkinter import *
+# Installing dependencies
+# python3 -m pip install tkinter
+# python3 -m pip install peewee
+# python3 -m pip install pyyaml
+from tkinter import * 
 from tkinter import messagebox
 import math
 from models import Record, db
@@ -27,7 +31,7 @@ class DataEntry():
         Notebook.add(self.tab2, text="data entry")
         Notebook.grid(row=0, column=0)
 
-        self.create_db_tables()
+        # self.create_db_tables()
         self.draw_list_page()
         self.populate_list_items()
         self.draw_footer()
@@ -135,7 +139,7 @@ class DataEntry():
             delete = Label(self.items, text="-")
             delete.bind("<Button-1>",lambda e, record=record : self.delete_record(theID=record[1].id))
             delete.grid(row=record[0] + 4, column=len(self.fieldnames), sticky=N+S+E+W, padx=1, pady=1)
-        Separator(self.items, orient=HORIZONTAL).grid(row=999, columnspan=len(self.fieldnames), sticky="ew", pady=4)
+        Separator(self.items, orient=HORIZONTAL).grid(row=9, columnspan=8, sticky="ew", pady=4)
         self.draw_footer(query=query)
 
     def make_header_row(self, frame, row=2):
