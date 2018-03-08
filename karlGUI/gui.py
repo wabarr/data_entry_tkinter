@@ -24,28 +24,51 @@ class GUI:
 		# draw main page
 		self.drawMainPage()
 
+	# This method calls the other draw methods
 	def drawMainPage(self):
 		self.drawFieldToggleButtons()
-		self.drawListView()
+		self.drawNoteBook()
 
-	def drawListView(self):
-		# create a frame for the listView to sit inside of
-		self.group2 = Frame(self.master)
-		self.group2.pack(side=TOP,fill=BOTH,expand=True,ipadx=5,ipady=5)
+	# Draw the notebook. This creates the two tabbed windows. 
+	def drawNoteBook(self):
+		# Create notebook (it is a frame that with multiple tabbed windows)
+		self.notebook = Notebook(self.master)
+
+		# vscrollbar
+		self.vscrollbar = Scrollbar(self.master, orient = VERTICAL)
+
+		# notebook tabs
+		self.listViewTab = Canvas(self.notebook, yscrollcommand = self.vscrollbar.set)
+		self.dataEntryTab = Frame(self.notebook)
+		self.vscrollbar.config(command = self.listViewTab.yview) #assign vscrollbar to listViewTab
+		
+		self.vscrollbar.pack(side=RIGHT, fill=Y)
+
+		self.notebook.add(self.listViewTab, text = "List View")
+		self.notebook.add(self.dataEntryTab, text = "Data Entry")
+		
+
+		# draw everything
+		self.notebook.pack(side=TOP,fill=BOTH,expand=True,ipadx=5,ipady=5)
+		
+		
+		
+		# # add a scroll bar to the listViewTab
+		# self.scrollbar = Scrollbar(self.listViewTab)
+		
 
 
-		# Create notebook (this allows for multiple tabbed windows)
-		self.notebook = Notebook(self.group2)
+		# self.listViewTab.config(yscrollcommand=self.scrollbar.set)
+		# self.scrollbar.config(command=self.listViewTab.yview)
 
-		tab1 = Frame(self.notebook)
-		tab2 = Frame(self.notebook)
-		tab3 = Frame(self.notebook)
-		Label(tab1, text='Exit').pack(padx=20, pady=20)
+		for i in range(0,30):
+			Label(self.listViewTab,text=str(i)).pack(side=TOP)
 
-		self.notebook.add(tab1, text = "List View",compound=TOP)
-		self.notebook.add(tab2, text = "Data Entry")
-		self.notebook.pack(side=TOP,fill=BOTH,expand=True)
+		
+	# def exampleListViewItems(self):
 
+
+	# This method will be replaced by the config file.
 	def drawFieldToggleButtons(self):
 		self.showField = [None] * NUM_FIELDS #variables to know if fieldToggle is on/off
 		self.fieldToggle = [None] * NUM_FIELDS # list of checkbuttons to toggle fields on/off
@@ -69,6 +92,7 @@ class GUI:
 		self.fieldToggle[2].pack(side=LEFT, padx=5)
 		self.fieldToggle[3].pack(side=LEFT, padx=5)
 
+	# This method will read the config file and be called when building the pages.
 	def displayField_callback(self, field_num):
 		# turn on/off field based on checkbutton field toggle
 		if self.showField[field_num].get(): # True/False
