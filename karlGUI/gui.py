@@ -8,6 +8,7 @@ Current version:
 
 from tkinter import *
 from tkinter.ttk import *
+from VerticalScrolledFrame import *
 
 NUM_FIELDS = 10
 
@@ -27,7 +28,40 @@ class GUI:
 	# This method calls the other draw methods
 	def drawMainPage(self):
 		self.drawFieldToggleButtons()
-		self.drawNoteBook()
+		self.drawNoteBook3()
+		self.populateListViewTab()
+
+	def drawNoteBook3(self):
+		# Create notebook (it is a frame that with multiple tabbed windows)
+		self.notebook = Notebook(self.master)
+
+		self.listViewTab = VerticalScrolledFrame(self.notebook) 
+		self.dataEntryTab = Frame(self.notebook)
+
+		self.notebook.add(self.listViewTab, text = "List View")
+		self.notebook.add(self.dataEntryTab, text = "Data Entry")
+
+		# draw everything
+		self.notebook.pack(side=TOP,fill=BOTH,expand=True,ipadx=5,ipady=5)
+
+	def populateListViewTab(self):
+		# populate listViewTab with some stuff
+
+		for i in range(1,51):
+			Label(self.listViewTab.interior, text="Entry "+str(i)).grid(row=i,column=0)
+			Entry(self.listViewTab.interior,width=8).grid(row=i,column=1)
+
+	# def drawNoteBook2(self):
+	# 	# Create notebook (it is a frame that with multiple tabbed windows)
+	# 	self.notebook = Notebook(self.master)
+
+	# 	self.listViewTab = tixScrolledWindow(self.notebook, scrollbar='y') 
+
+	# 	self.notebook.add(self.listViewTab, text = "List View")
+	# 	self.notebook.add(self.dataEntryTab, text = "Data Entry")
+
+	# 	# draw everything
+	# 	self.notebook.pack(side=TOP,fill=BOTH,expand=True,ipadx=5,ipady=5)
 
 	# Draw the notebook. This creates the two tabbed windows. 
 	def drawNoteBook(self):
