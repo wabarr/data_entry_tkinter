@@ -50,8 +50,7 @@ class GUI:
 		# Draw the notebook
 		self.notebook.pack(side=TOP,fill=BOTH,expand=True)
 
-		Label(self.dataEntryTab,text="heyy, this is where your data enters me ;)").pack()
-		Label(self.dataEntryTab,text="\nok.\nyou know what..\nthat was a sexaul joke.\nAnd you know what else?\nIt wasn't even that good.\nsorry.").pack()
+		Label(self.dataEntryTab,text="This is a work in progress").pack()
 
 	def drawListViewTab(self):
 		# Create the frames in the list view tab
