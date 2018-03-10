@@ -10,6 +10,10 @@ from tkinter import *
 from tkinter.ttk import *
 from VerticalScrolledFrame import *
 
+# Important development tips:
+#   - To add a widget to a VerticalScrolledFrame v, you must use 'v.interior'
+#     Example: Label(self.v.interior, text="hello")
+
 NUM_FIELDS = 10
 
 class GUI:
@@ -19,8 +23,8 @@ class GUI:
 		# Set Window Title
 		self.master.title("Fossile Data Entry")
 		# Set Window Dimensions
-		self.master.minsize(width = 600, height = 400)
-		self.master.maxsize(width = 600, height = 400)
+		# self.master.minsize(width = 600, height = 400)
+		# self.master.maxsize(width = 600, height = 400)
 
 		# draw main page
 		self.drawMainPage()
@@ -28,79 +32,88 @@ class GUI:
 	# This method calls the other draw methods
 	def drawMainPage(self):
 		self.drawFieldToggleButtons()
-		self.drawNoteBook3()
+		self.drawNoteBook()
+		self.drawListViewTab()
 		self.populateListViewTab()
 
-	def drawNoteBook3(self):
-		# Create notebook (it is a frame that with multiple tabbed windows)
-		self.notebook = Notebook(self.master)
-
-		self.listViewTab = VerticalScrolledFrame(self.notebook) 
-		self.dataEntryTab = Frame(self.notebook)
-
-		self.notebook.add(self.listViewTab, text = "List View")
-		self.notebook.add(self.dataEntryTab, text = "Data Entry")
-
-		# draw everything
-		self.notebook.pack(side=TOP,fill=BOTH,expand=True,ipadx=5,ipady=5)
-
-	def populateListViewTab(self):
-		# populate listViewTab with some stuff
-
-		for i in range(1,51):
-			Label(self.listViewTab.interior, text="Entry "+str(i)).grid(row=i,column=0)
-			Entry(self.listViewTab.interior,width=8).grid(row=i,column=1)
-
-	# def drawNoteBook2(self):
-	# 	# Create notebook (it is a frame that with multiple tabbed windows)
-	# 	self.notebook = Notebook(self.master)
-
-	# 	self.listViewTab = tixScrolledWindow(self.notebook, scrollbar='y') 
-
-	# 	self.notebook.add(self.listViewTab, text = "List View")
-	# 	self.notebook.add(self.dataEntryTab, text = "Data Entry")
-
-	# 	# draw everything
-	# 	self.notebook.pack(side=TOP,fill=BOTH,expand=True,ipadx=5,ipady=5)
-
-	# Draw the notebook. This creates the two tabbed windows. 
 	def drawNoteBook(self):
 		# Create notebook (it is a frame that with multiple tabbed windows)
 		self.notebook = Notebook(self.master)
 
-		# vscrollbar
-		self.vscrollbar = Scrollbar(self.master, orient = VERTICAL)
-
-		# notebook tabs
-		self.listViewTab = Canvas(self.notebook, yscrollcommand = self.vscrollbar.set)
+		# Tabs in the notebook. 
+		self.listViewTab = Frame(self.notebook)
 		self.dataEntryTab = Frame(self.notebook)
-		self.vscrollbar.config(command = self.listViewTab.yview) #assign vscrollbar to listViewTab
-		
-		self.vscrollbar.pack(side=RIGHT, fill=Y)
-
 		self.notebook.add(self.listViewTab, text = "List View")
 		self.notebook.add(self.dataEntryTab, text = "Data Entry")
-		
 
-		# draw everything
-		self.notebook.pack(side=TOP,fill=BOTH,expand=True,ipadx=5,ipady=5)
-		
-		
-		
-		# # add a scroll bar to the listViewTab
-		# self.scrollbar = Scrollbar(self.listViewTab)
-		
+		# Draw the notebook
+		self.notebook.pack(side=TOP,fill=BOTH,expand=True)
 
+		Label(self.dataEntryTab,text="heyy, this is where your data enters me ;)").pack()
+		Label(self.dataEntryTab,text="\nok.\nyou know what..\nthat was a sexaul joke.\nAnd you know what else?\nIt wasn't even that good.\nsorry.").pack()
 
-		# self.listViewTab.config(yscrollcommand=self.scrollbar.set)
-		# self.scrollbar.config(command=self.listViewTab.yview)
+	def drawListViewTab(self):
+		# Create the frames in the list view tab
+		self.columnNames = Frame(self.listViewTab)
+		self.dataList = VerticalScrolledFrame(self.listViewTab)
+		self.navFooter = Frame(self.listViewTab)
+		# draw them
+		self.columnNames.pack(fill=X)
+		Separator(self.listViewTab, orient="horizontal").pack(fill=X) # separator line
+		self.dataList.pack(fill=BOTH,expand=True)
+		Separator(self.listViewTab, orient="horizontal").pack(fill=X) # separator line
+		self.navFooter.pack(fill=X)
 
-		for i in range(0,30):
-			Label(self.listViewTab,text=str(i)).pack(side=TOP)
+	def populateListViewTab(self):
+		f = ('Courier',12,'bold') # font
+		# Add column names
+		Label(self.columnNames,text="ID  ",width=6,font=f).grid(row=0,column=0,pady=5,padx=0)
+		Label(self.columnNames,text="Name",width=10,font=f).grid(row=0,column=1,pady=5,padx=0)
+		Label(self.columnNames,text="x   ",width=10,font=f).grid(row=0,column=2,pady=5,padx=0)
+		Label(self.columnNames,text="y   ",width=10,font=f).grid(row=0,column=3,pady=5,padx=0)
 
-		
-	# def exampleListViewItems(self):
+		# populate dataList with some stuff
+		# Note: To add a widget to self.dataList, you need to use 'self.dataList.interior'
+		f1 = ('Courier',12) # font
+		f2 = ('Times',12) # font
+		for i in range(1,51):
+			Label(self.dataList.interior,font=f1,width=6,text=str(i).zfill(5)).grid(row=i,column=0)
+			name = Entry(self.dataList.interior,font=f2,width=10)
+			x = Entry(self.dataList.interior,font=f1,width=10)
+			y = Entry(self.dataList.interior,font=f1,width=10)
+			name.grid(row=i,column=1)
+			x.grid(row=i,column=2)
+			y.grid(row=i,column=3)
+			# Fill the entry boxes with some junk
+			name.insert(0,"name_"+str(i))
+			x.insert(0,format(38.900070 + i*0.000001,'.6f'))
+			y.insert(0,format(-77.049630+ i*0.000001,'.6f'))
 
+		f1 = ('Courier',15, "bold") # font
+		f2 = ('Times',15) # font
+		# Add the navigation bar at the bottom
+		previousPage = Label(self.navFooter, text="\u21e6",font=f1)
+		nextPage = Label(self.navFooter, text="\u21e8",font=f1)
+
+		# previousPage.grid(row=0, column=0)
+		# Label(self.navFooter, text="Page # of ###",font=f2).grid(row=0, column=1)
+		# nextPage.grid(row=0, column=2)
+		# Label(self.navFooter, text="#### total records",font=f2,anchor=E).grid(row=0, column=3,sticky=E)
+
+		# try packing them in
+		previousPage.pack(side=LEFT)
+		Label(self.navFooter, text="Page # of ###",font=f2).pack(side=LEFT)
+		nextPage.pack(side=LEFT)
+		Label(self.navFooter, text="#### total records",font=f2).pack(side=RIGHT)
+
+		def previous_page(*args):
+			# TODO
+			pass
+		def next_page(*args):
+			# TODO
+			pass
+		previousPage.bind("<Button-1>", previous_page)
+		nextPage.bind("<Button-1>", next_page)
 
 	# This method will be replaced by the config file.
 	def drawFieldToggleButtons(self):
