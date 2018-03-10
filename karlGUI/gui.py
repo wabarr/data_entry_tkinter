@@ -7,6 +7,7 @@ Current version:
 """
 
 from tkinter import *
+import tkinter as tk
 from tkinter.ttk import *
 from VerticalScrolledFrame import *
 
@@ -65,7 +66,7 @@ class GUI:
 		self.navFooter.pack(fill=X)
 
 	def populateListViewTab(self):
-		f = ('Courier',12,'bold') # font
+		f = ('Courier',13,'bold') # font
 		# Add column names
 		Label(self.columnNames,text="ID  ",width=6,font=f).grid(row=0,column=0,pady=5,padx=0)
 		Label(self.columnNames,text="Name",width=10,font=f).grid(row=0,column=1,pady=5,padx=0)
@@ -75,7 +76,7 @@ class GUI:
 		# populate dataList with some stuff
 		# Note: To add a widget to self.dataList, you need to use 'self.dataList.interior'
 		f1 = ('Courier',12) # font
-		f2 = ('Times',12) # font
+		f2 = ('Courier',12) # font
 		for i in range(1,51):
 			Label(self.dataList.interior,font=f1,width=6,text=str(i).zfill(5)).grid(row=i,column=0)
 			name = Entry(self.dataList.interior,font=f2,width=10)
