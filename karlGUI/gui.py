@@ -17,28 +17,25 @@ from tkinter import *
 import tkinter as tk
 from tkinter.ttk import *
 from VerticalScrolledFrame import *
-# import ImageTk
 
 # other stuff
-import time, random
+import time, random, math
 
 # Important development tips:
 #   - To add a widget to a VerticalScrolledFrame v, you must use 'v.interior'
 #     Example: Label(self.v.interior, text="hello")
 
-
 """
 TODO:
 * optimize widget destroy for listViewTab
-* arrow keys for navigation
-* highlight an entry row
-* double click entry row to visit data Entry tab
-* data entry tab
+* arrow keys/scroll wheel for navigation
 * column Configuration
+* go to specific page in page navigation
+* search bar
+* edit record button
+* Add dataEntry
+	- update self.numRecords, self.numRecordsLabel upon save of entry
 """
-
-NUM_FIELDS = 10
-NUM_DATA = 4000
 
 class GUI:
 	def __init__(self, master):
@@ -52,20 +49,44 @@ class GUI:
 		self.master.geometry('800x600')
 
 		# GUI settings
-		self.dataPerPage = 50
+		self.dataPerPage = 40 # if more than 50 and rendering is SLOW
 
 		# Class Variables
 		self.pageNum = 0 # Which page of self.dataList are we looking at
+		self.numRecords = 97
+
+		self.getListViewFields()
 
 		# draw main page
 		self.drawMainPage()
 
+
+	def getListViewFields(self):
+		# Get all fields selected to be shown in listView
+
+		# TODO: Retrieve from config file
+		# field is a tuple: ("name", "type", number of characters to be displayed)
+		self.listViewFields = [
+			("ID","int",6),("Name","string",10),
+			("Qty","int",6),("x","float",10),
+			("y","float",10),("Date Created","string",16),
+			("Last Modified","string",16)]
+
+		self.listViewFields = [
+			("ID","int",6),("Name","string",10),
+			("Qty","int",6),("Date Created","string",16),
+			("Last Modified","string",16),("Color","string",10),("ID","int",6)]
+
+	def getFields(self):
+		# Get all fields defined in config file.
+		# All of these fields will be shown in dataEntryTab.
+		pass
+
 	# This method calls the other draw methods
 	def drawMainPage(self):
-		self.drawFieldToggleButtons()
 		self.drawNoteBook()
 		self.drawListViewTab()
-		self.populateListViewTab()
+		self.populateDataList()
 
 	def drawNoteBook(self):
 		# Create notebook (it is a frame that with multiple tabbed windows)
@@ -86,159 +107,126 @@ class GUI:
 		for widget in self.listViewTab.winfo_children():
 			widget.destroy()
 
-		# Create the frames in the list view tab
+		# Create the container frames in the list view tab
 		self.columnNames = Frame(self.listViewTab)
 		self.dataList = VerticalScrolledFrame(self.listViewTab)
 		self.navFooter = Frame(self.listViewTab)
-		# draw them
+		# draw the containers
 		self.columnNames.pack(fill=X)
 		Separator(self.listViewTab, orient="horizontal").pack(fill=X) # separator line
 		self.dataList.pack(fill=BOTH,expand=True)
 		Separator(self.listViewTab, orient="horizontal").pack(fill=X) # separator line
 		self.navFooter.pack(fill=X)
 
+		# fill the containers
+		self.drawColumnNames()
+		self.drawNavFooter()
+
 	def destroyListViewTab(self):
 		for widget in frame.winfo_children():
 			widget.destroy()
 
-	def populateListViewTab(self):
-		# Note on font sizes
-		# - columnName font/padx line up perfectly with field data columns only with the current settings
-		f1 = ('Courier',12,'bold') # font for column names
-		f2 = ('Courier',12) # font for field data
-		# Add column names to top
-		# Label(self.columnNames,text="ID",  width=6, font=f1).grid(row=0,column=0,pady=5,padx=3)
-		# Label(self.columnNames,text="Name",width=10,font=f1).grid(row=0,column=1,pady=5,padx=3)
-		# Label(self.columnNames,text="Qty", width=6, font=f1).grid(row=0,column=2,pady=5,padx=3)
-		# Label(self.columnNames,text="x",   width=10,font=f1).grid(row=0,column=3,pady=5,padx=3)
-		# Label(self.columnNames,text="y",   width=10,font=f1).grid(row=0,column=4,pady=5,padx=3)
-		# Label(self.columnNames,text="Date",width=16,font=f1).grid(row=0,column=5,pady=5,padx=3)
-		# Label(self.columnNames,text="Last modified",width=16,font=f1).grid(row=0,column=6,pady=5,padx=3)
-		# Label(self.columnNames,text="Image",width=16,font=f1).grid(row=0,column=7,pady=5,padx=3)
+	def drawColumnNames(self):
+		# Draw column names on listViewTab specified in config file
+		# First, clear the container
+		if len(self.columnNames.winfo_children()) > 0:
+			for widget in self.columnNames.winfo_children():
+				widget.destroy()
 
-		# label version
-		Label(self.columnNames,text="  ",width=2,font=f1).grid(row=0,column=0,pady=5,padx=5) #edit button
-		Label(self.columnNames,text="ID",  width=6, font=f1).grid(row=0,column=1,pady=5,padx=5)
-		Label(self.columnNames,text="Name",width=10,font=f1).grid(row=0,column=2,pady=5,padx=5)
-		Label(self.columnNames,text="Qty", width=6, font=f1).grid(row=0,column=3,pady=5,padx=5)
-		Label(self.columnNames,text="x",   width=10,font=f1).grid(row=0,column=4,pady=5,padx=5)
-		Label(self.columnNames,text="y",   width=10,font=f1).grid(row=0,column=5,pady=5,padx=5)
-		Label(self.columnNames,text="Date created", width=16,font=f1).grid(row=0,column=6,pady=5,padx=5)
-		Label(self.columnNames,text="Last modified",width=16,font=f1).grid(row=0,column=7,pady=5,padx=5)
+		f = ('Courier',12,'bold') # font for column names
+		Label(self.columnNames,text="  ",width=2,font=f).grid(row=0,column=0,pady=5,padx=4) #edit button
+		
+		index = 1 # first column is blank for the edit button
+		for i in self.listViewFields:
+			Label(self.columnNames,text=str(i[0]),width=i[2],font=f).grid(row=0,column=index,pady=5,padx=5)
+			index = index+1
 
-
-		# populate dataList with some stuff
-		# Note: To add a widget to self.dataList, you need to use 'self.dataList.interior'
-
-		f = ('Courier',12) # font
-		m = self.pageNum*self.dataPerPage
-		n = m+self.dataPerPage
-		if NUM_DATA < n:
-			n = NUM_DATA
-		for i in range(m,n):
-			# Edit button
-			# pick a (small) image file you have in the working directory ...
-			img = PhotoImage(file="editSymbol.gif")
-			# create the image button, image is above (top) the optional text
-			editButton = Label(self.dataList.interior,font=f,image=img,width=2,borderwidth=0,relief=RAISED)
-			# save the button's image from garbage collection (needed?)
-			editButton.image = img
-
-			# create the fields
-			ID =   Label(self.dataList.interior,font=f2,width=6)
-			name = Label(self.dataList.interior,font=f2,width=10)
-			qty =  Label(self.dataList.interior,font=f2,width=6)
-			x =    Label(self.dataList.interior,font=f2,width=10)
-			y =    Label(self.dataList.interior,font=f2,width=10)
-			date = Label(self.dataList.interior,font=f2,width=16)
-			modified = Label(self.dataList.interior,font=f2,width=16)
-
-			# draw the fields
-			editButton.grid(row=i,column=0,padx=5,ipadx=3,sticky=E)
-			ID.grid(row=i,  column=1,padx=5)
-			name.grid(row=i,column=2,padx=5)
-			qty.grid(row=i, column=3,padx=5)
-			x.grid(row=i,   column=4,padx=5)
-			y.grid(row=i,   column=5,padx=5)
-			date.grid(row=i,column=6,padx=5)
-			modified.grid(row=i,column=7,padx=5)
-
-			# Fill the fields with some junk
-			ID['text']=str(i).zfill(5)
-			name['text']="name_"+str(i)
-			qty['text']=str(random.randint(0,50))
-			x['text']=format(38.900070 + i*0.000001,'.6f')
-			y['text']=format(-77.049630+ i*0.000001,'.6f')
-			date['text']=time.strftime("%Y-%m-%d %H:%M")
-			modified['text']=time.strftime("%Y-%m-%d %H:%M")
-
-		# Add the navigation bar at the bottom
+	def drawNavFooter(self):
+		# Add the navigation bar at the bottom of listViewTab
 		f1 = ('Courier',15, "bold") # font
-		f2 = ('Times',15) # font
-		previousPage = Label(self.navFooter, text="\u21e6",font=f1)
-		nextPage = Label(self.navFooter, text="\u21e8",font=f1)
-		# Pack them in
+		f2 = ('Times',15, "bold") # font
+
+		# create labels
+		previousPage = Label(self.navFooter, text="\u21e6",font=f1) # unicode left arrow symbol
+		nextPage = Label(self.navFooter, text="\u21e8",font=f1) # unicode right arrow symbol
+		n = math.ceil(self.numRecords/self.dataPerPage)
+		self.currentPageLabel = Label(self.navFooter, text="Page "+str(self.pageNum+1)+" of "+str(n),font=f2,width=12,anchor="center")
+		self.numRecordsLabel = Label(self.navFooter, text=str(self.numRecords)+" total records",font=f2)
+
+		# Draw the labels
 		previousPage.pack(side=LEFT)
-		n = int(NUM_DATA/self.dataPerPage)
-		Label(self.navFooter, text="Page "+str(self.pageNum+1)+" of "+str(n),font=f2).pack(side=LEFT)
+		self.currentPageLabel.pack(side=LEFT)
 		nextPage.pack(side=LEFT)
-		Label(self.navFooter, text=str(NUM_DATA)+" total records",font=f2).pack(side=RIGHT)
+		self.numRecordsLabel.pack(side=RIGHT)
+		
+		# Bind events to the left and right arrow labels
 		previousPage.bind("<Button-1>", self.previousPageCallback)
 		nextPage.bind("<Button-1>", self.nextPageCallback)
 
 	def previousPageCallback(self,event):
 		if self.pageNum > 0:
 			self.pageNum = self.pageNum - 1
-			self.drawListViewTab()
-			self.populateListViewTab()
+			n = math.ceil(self.numRecords/self.dataPerPage) # get num pages
+			self.currentPageLabel['text'] = "Page "+str(self.pageNum+1)+" of "+str(n)
+			self.populateDataList()
+			self.dataList.canvas.yview_moveto(0) # scroll to top when page is changed
 
 	def nextPageCallback(self,event):
-		if (self.pageNum+1)*self.dataPerPage < NUM_DATA:
+		if (self.pageNum+1)*self.dataPerPage < self.numRecords:
 			self.pageNum = self.pageNum + 1
-			self.drawListViewTab()
-			self.populateListViewTab()
+			n = math.ceil(self.numRecords/self.dataPerPage) # get num pages
+			self.currentPageLabel['text'] = "Page "+str(self.pageNum+1)+" of "+str(n)
+			self.populateDataList()
+			self.dataList.canvas.yview_moveto(0) # scroll to top when page is changed
 
+	def populateDataList(self):
+		# First, clear the container
+		if len(self.dataList.interior.winfo_children()) > 0:
+			for widget in self.dataList.interior.winfo_children():
+				widget.destroy()
 
+		f = ('Courier',12) # font for field data
+		img = PhotoImage(file="editSymbol.gif")
 
+		# populate dataList with some stuff
+		# Note: To add a widget to self.dataList, you need to use 'self.dataList.interior'
+		m = self.pageNum*self.dataPerPage
+		n = m+self.dataPerPage
+		if self.numRecords < n:
+			n = self.numRecords
+		for i in range(m,n):
+			# Edit button
+			editButton = Label(self.dataList.interior,image=img,width=2,font=f)
+			editButton.image = img # save the button's image from garbage collection 
+			editButton.grid(row=i,column=0,padx=5,ipadx=0,sticky=E)
 
+			# Rest of the fields as defined in config file
+			index = 1 # first column is the edit button
+			for col in self.listViewFields:
+				# Get field data from database for record i
+				s = self.getRecordFieldData(i,col[0])
+				# Make the label and draw it
+				Label(self.dataList.interior,text=s,width=col[2],font=f).grid(row=i,column=index,padx=5)
+				index = index+1 #increment column index to get next field
 
-
-
-
-
-	# This method will be replaced by the config file.
-	def drawFieldToggleButtons(self):
-		self.showField = [None] * NUM_FIELDS #variables to know if fieldToggle is on/off
-		self.fieldToggle = [None] * NUM_FIELDS # list of checkbuttons to toggle fields on/off
-		for i in range(0,NUM_FIELDS): # initialize array elements
-			self.showField[i] = BooleanVar()
-			self.showField[i].set(True)
-
-		# create a frame for the fieldToggle checkbuttons to sit inside of
-		self.group = LabelFrame(self.master, text="Configuration options (this will be removed after config file is built)")
-		self.group.pack(side=TOP,fill=X,padx=5,pady=5,ipadx=5,ipady=5)
-
-		# initialize toggle field checkbuttons
-		self.fieldToggle[0] = Checkbutton(self.group, text="field 0", variable=self.showField[0], command=lambda: self.displayField_callback(0))
-		self.fieldToggle[1] = Checkbutton(self.group, text="field 1", variable=self.showField[1], command=lambda: self.displayField_callback(1))
-		self.fieldToggle[2] = Checkbutton(self.group, text="field 2", variable=self.showField[2], command=lambda: self.displayField_callback(2))
-		self.fieldToggle[3] = Checkbutton(self.group, text="field 3", variable=self.showField[3], command=lambda: self.displayField_callback(3))
-
-		# draw toggle fields to the screen (inside of group)
-		self.fieldToggle[0].pack(side=LEFT, padx=5)
-		self.fieldToggle[1].pack(side=LEFT, padx=5)
-		self.fieldToggle[2].pack(side=LEFT, padx=5)
-		self.fieldToggle[3].pack(side=LEFT, padx=5)
-
-	# This method will read the config file and be called when building the pages.
-	def displayField_callback(self, field_num):
-		# turn on/off field based on checkbutton field toggle
-		if self.showField[field_num].get(): # True/False
-			# print("field",field_num,"on")
-			pass
+	def getRecordFieldData(self, row, fieldName):
+		# returns a string
+		if fieldName == "ID":
+			return str(row).zfill(5)
+		elif fieldName == "Name":
+			return "name_"+str(row)
+		elif fieldName == "Qty":
+			return str(random.randint(0,50))
+		elif fieldName == "x":
+			return format(38.900070 + row*0.000001,'.6f')
+		elif fieldName == "y":
+			return format(-77.049630+ row*0.000001,'.6f')
+		elif fieldName == "Date Created":
+			return time.strftime("%Y-%m-%d %H:%M")
+		elif fieldName == "Last Modified":
+			return time.strftime("%Y-%m-%d %H:%M")
 		else:
-			# print("field",field_num,"off")
-			pass
+			return "N/A"
 
 
 if __name__ == "__main__":

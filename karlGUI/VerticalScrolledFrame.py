@@ -19,7 +19,7 @@ class VerticalScrolledFrame(Frame):
     * This frame only allows vertical scrolling
     """
     def __init__(self, parent, *args, **kw):
-        Frame.__init__(self, parent, *args, **kw)            
+        Frame.__init__(self, parent, *args, **kw)
 
         # create a canvas object and a vertical scrollbar for scrolling it
         vscrollbar = Scrollbar(self, orient=VERTICAL)
@@ -35,6 +35,8 @@ class VerticalScrolledFrame(Frame):
         # create a frame inside the canvas which will be scrolled with it
         self.interior = interior = Frame(canvas)
         interior_id = canvas.create_window(0, 0, window=interior, anchor=NW)
+
+        self.canvas = canvas
 
         # track changes to the canvas and frame width and sync them,
         # also updating the scrollbar
