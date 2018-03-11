@@ -138,7 +138,7 @@ class GUI:
 		for i in range(m,n):
 			# Edit button
 			# pick a (small) image file you have in the working directory ...
-			img = PhotoImage(file="editSymbol2.gif")
+			img = PhotoImage(file="editSymbol.gif")
 			# create the image button, image is above (top) the optional text
 			editButton = Label(self.dataList.interior,font=f,image=img,width=2,borderwidth=0,relief=RAISED)
 			# save the button's image from garbage collection (needed?)
