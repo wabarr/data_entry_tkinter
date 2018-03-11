@@ -79,8 +79,8 @@ class GUI:
 
 		# Draw the notebook
 		self.notebook.pack(side=TOP,fill=BOTH,expand=True)
-
 		Label(self.dataEntryTab,text="Enter data here. This will create a new\nrow in the list view with a unique ID.").pack()
+
 
 	def drawListViewTab(self):
 		for widget in self.listViewTab.winfo_children():
