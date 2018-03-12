@@ -19,7 +19,7 @@ from tkinter.ttk import *
 from VerticalScrolledFrame import *
 
 # other stuff
-import time, random, math
+import time, random, math, threading
 
 # Important development tips:
 #   - To add a widget to a VerticalScrolledFrame v, you must use 'v.interior'
@@ -49,7 +49,7 @@ class GUI:
 		self.master.geometry('800x600')
 
 		# GUI settings
-		self.dataPerPage = 40 # if more than 50 and rendering is SLOW
+		self.recordsPerPage = 10 # if more than 50 and rendering is SLOW
 
 		# Class Variables
 		self.pageNum = 0 # Which page of self.dataList are we looking at
@@ -120,6 +120,7 @@ class GUI:
 
 		# fill the containers
 		self.drawColumnNames()
+		self.drawRecordRows()
 		self.drawNavFooter()
 
 	def destroyListViewTab(self):
@@ -149,7 +150,7 @@ class GUI:
 		# create labels
 		previousPage = Label(self.navFooter, text="\u21e6",font=f1) # unicode left arrow symbol
 		nextPage = Label(self.navFooter, text="\u21e8",font=f1) # unicode right arrow symbol
-		n = math.ceil(self.numRecords/self.dataPerPage)
+		n = math.ceil(self.numRecords/self.recordsPerPage)
 		self.currentPageLabel = Label(self.navFooter, text="Page "+str(self.pageNum+1)+" of "+str(n),font=f2,width=12,anchor="center")
 		self.numRecordsLabel = Label(self.navFooter, text=str(self.numRecords)+" total records",font=f2)
 
@@ -166,20 +167,85 @@ class GUI:
 	def previousPageCallback(self,event):
 		if self.pageNum > 0:
 			self.pageNum = self.pageNum - 1
-			n = math.ceil(self.numRecords/self.dataPerPage) # get num pages
+			n = math.ceil(self.numRecords/self.recordsPerPage) # get num pages
 			self.currentPageLabel['text'] = "Page "+str(self.pageNum+1)+" of "+str(n)
 			self.populateDataList()
 			self.dataList.canvas.yview_moveto(0) # scroll to top when page is changed
 
 	def nextPageCallback(self,event):
-		if (self.pageNum+1)*self.dataPerPage < self.numRecords:
+		if (self.pageNum+1)*self.recordsPerPage < self.numRecords:
 			self.pageNum = self.pageNum + 1
-			n = math.ceil(self.numRecords/self.dataPerPage) # get num pages
+			n = math.ceil(self.numRecords/self.recordsPerPage) # get num pages
 			self.currentPageLabel['text'] = "Page "+str(self.pageNum+1)+" of "+str(n)
 			self.populateDataList()
 			self.dataList.canvas.yview_moveto(0) # scroll to top when page is changed
 
+	def drawRecordRows(self):
+		f = ('Courier',12) # font for field data
+
+		# Create a 2D array to store references to all record field Labels
+		self.recordLabels = [[None for col in range(0,len(self.listViewFields)+1)] for row in range(0,self.recordsPerPage)]
+
+		# Create empty Labels for every record row
+		for row in range(0,self.recordsPerPage):
+			# Draw the edit button Label
+			self.recordLabels[row][0] = Label(self.dataList.interior,text="",width=2,font=f)
+			self.recordLabels[row][0].grid(row=row,column=0,padx=5,sticky=E)
+
+			# Draw an empty Label for each field
+			for column, field in enumerate(self.listViewFields, start=1):
+				self.recordLabels[row][column] = Label(self.dataList.interior,text="",width=field[2],font=f)
+				self.recordLabels[row][column].grid(row=row,column=column,padx=5)
+				
+
 	def populateDataList(self):
+		# populate empty labels
+
+		# #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		# # this isn't correct
+		img = PhotoImage(file="editSymbol.gif")
+		# self.editButtons = [None]*self.recordsPerPage
+
+		# # add edit image to Label and create binding
+		# editButtons[row] = Label(self.dataList.interior,image=img,width=2,font=f)
+		# editButtons[row].image = img # save the button's image from garbage collection 
+		# editButtons[row].grid(row=row,column=0,padx=5,ipadx=0,sticky=E)
+		# #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+		for row in range(0,self.recordsPerPage): # num rows
+			ID = self.pageNum * self.recordsPerPage + row
+			if ID > self.numRecords:
+				# This is the last page of data and it is not full
+				# Clear the remaining rows
+				self.recordLabels[row][0]['image'] = None # clear edit button image
+				self.recordLabels[row][0].image = None
+				# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+				# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+				# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+				# TODO: Remove event binding to edit button!
+				# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+				# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+				# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+				for column in range(0,len(self.listViewFields)):
+					self.recordLabels[row][column+1]['text'] = "" # clear field labels
+			else:
+				self.recordLabels[row][0]['image'] = img # add edit button to column 0
+				self.recordLabels[row][0].image = img
+				# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+				# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+				# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+				# TODO: Add event binding to edit button here!
+				# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+				# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+				# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+				# Add data to each column for the record
+				for column in range(0,len(self.listViewFields)): # num columns (fields)
+					s = self.getRecordFieldData(ID, self.listViewFields[column][0]) #row=ID,column=fieldName
+					self.recordLabels[row][column+1]['text'] = s # 0th column is edit button
+
+	def populateDataList_old(self):
 		# First, clear the container
 		if len(self.dataList.interior.winfo_children()) > 0:
 			for widget in self.dataList.interior.winfo_children():
@@ -190,8 +256,8 @@ class GUI:
 
 		# populate dataList with some stuff
 		# Note: To add a widget to self.dataList, you need to use 'self.dataList.interior'
-		m = self.pageNum*self.dataPerPage
-		n = m+self.dataPerPage
+		m = self.pageNum*self.recordsPerPage
+		n = m+self.recordsPerPage
 		if self.numRecords < n:
 			n = self.numRecords
 		for i in range(m,n):
@@ -208,6 +274,7 @@ class GUI:
 				# Make the label and draw it
 				Label(self.dataList.interior,text=s,width=col[2],font=f).grid(row=i,column=index,padx=5)
 				index = index+1 #increment column index to get next field
+
 
 	def getRecordFieldData(self, row, fieldName):
 		# returns a string
