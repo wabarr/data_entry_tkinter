@@ -49,11 +49,11 @@ class GUI:
 		self.master.geometry('800x600')
 
 		# GUI settings
-		self.recordsPerPage = 10 # if more than 50 and rendering is SLOW
+		self.recordsPerPage = 20 # if more than 50 and rendering is SLOW
 
 		# Class Variables
 		self.pageNum = 0 # Which page of self.dataList are we looking at
-		self.numRecords = 97
+		self.numRecords = 35
 
 		self.getListViewFields()
 
@@ -189,7 +189,7 @@ class GUI:
 		# Create empty Labels for every record row
 		for row in range(0,self.recordsPerPage):
 			# Draw the edit button Label
-			self.recordLabels[row][0] = Label(self.dataList.interior,text="",width=2,font=f)
+			self.recordLabels[row][0] = Label(self.dataList.interior,text="",width=0,font=f)
 			self.recordLabels[row][0].grid(row=row,column=0,padx=5,sticky=E)
 
 			# Draw an empty Label for each field
@@ -217,15 +217,20 @@ class GUI:
 			if ID > self.numRecords:
 				# This is the last page of data and it is not full
 				# Clear the remaining rows
-				self.recordLabels[row][0]['image'] = None # clear edit button image
-				self.recordLabels[row][0].image = None
-				# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-				# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-				# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-				# TODO: Remove event binding to edit button!
-				# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-				# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-				# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+				def thread():
+					self.recordLabels[row][0]['image'] = "" # clear edit button image
+					self.recordLabels[row][0].image = ""
+					self.master.update()
+					# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+					# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+					# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+					# TODO: Remove event binding to edit button!
+					# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+					# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+					# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+				t = threading.Thread(target=thread)
+				t.setDaemon(True)
+				t.start()
 
 				for column in range(0,len(self.listViewFields)):
 					self.recordLabels[row][column+1]['text'] = "" # clear field labels
