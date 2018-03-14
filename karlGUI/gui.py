@@ -49,11 +49,11 @@ class GUI:
 		self.master.geometry('800x600')
 
 		# GUI settings
-		self.recordsPerPage = 20 # if more than 50 and rendering is SLOW
+		self.recordsPerPage = 50 # if more than 50 and rendering is SLOW
 
 		# Class Variables
 		self.pageNum = 0 # Which page of self.dataList are we looking at
-		self.numRecords = 35
+		self.numRecords = 290
 
 		self.getListViewFields()
 
@@ -101,7 +101,6 @@ class GUI:
 		# Draw the notebook
 		self.notebook.pack(side=TOP,fill=BOTH,expand=True)
 		Label(self.dataEntryTab,text="Enter data here. This will create a new\nrow in the list view with a unique ID.").pack()
-
 
 	def drawListViewTab(self):
 		for widget in self.listViewTab.winfo_children():
@@ -190,53 +189,38 @@ class GUI:
 		for row in range(0,self.recordsPerPage):
 			# Draw the edit button Label
 			self.recordLabels[row][0] = Label(self.dataList.interior,text="",width=0,font=f)
+			img = PhotoImage(file="editSymbol.gif")
+			self.recordLabels[row][0]['image'] = img # add edit button to column 0
+			self.recordLabels[row][0].image = img
 			self.recordLabels[row][0].grid(row=row,column=0,padx=5,sticky=E)
 
 			# Draw an empty Label for each field
 			for column, field in enumerate(self.listViewFields, start=1):
 				self.recordLabels[row][column] = Label(self.dataList.interior,text="",width=field[2],font=f)
 				self.recordLabels[row][column].grid(row=row,column=column,padx=5)
-				
+		
+		# Boolean array to tell if row is displayed or not (using grid, grid_remove())
+		self.rowsDisplayed = [True] * self.recordsPerPage
 
 	def populateDataList(self):
 		# populate empty labels
-
-		# #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		# # this isn't correct
-		img = PhotoImage(file="editSymbol.gif")
-		# self.editButtons = [None]*self.recordsPerPage
-
-		# # add edit image to Label and create binding
-		# editButtons[row] = Label(self.dataList.interior,image=img,width=2,font=f)
-		# editButtons[row].image = img # save the button's image from garbage collection 
-		# editButtons[row].grid(row=row,column=0,padx=5,ipadx=0,sticky=E)
-		# #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 		for row in range(0,self.recordsPerPage): # num rows
 			ID = self.pageNum * self.recordsPerPage + row
-			if ID > self.numRecords:
-				# This is the last page of data and it is not full
-				# Clear the remaining rows
-				def thread():
-					self.recordLabels[row][0]['image'] = "" # clear edit button image
-					self.recordLabels[row][0].image = ""
-					self.master.update()
-					# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-					# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-					# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-					# TODO: Remove event binding to edit button!
-					# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-					# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-					# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-				t = threading.Thread(target=thread)
-				t.setDaemon(True)
-				t.start()
-
+			if ID > self.numRecords: # Clear the remaining rows on the last page
+				self.rowsDisplayed[row] = False
+				# Remove (but don't destroy) the labels for the fields in the row
+				self.recordLabels[row][0].grid_remove() #edit button
 				for column in range(0,len(self.listViewFields)):
-					self.recordLabels[row][column+1]['text'] = "" # clear field labels
-			else:
-				self.recordLabels[row][0]['image'] = img # add edit button to column 0
-				self.recordLabels[row][0].image = img
+					self.recordLabels[row][column+1].grid_remove() #fields
+			else: # row is displayed
+				if self.rowsDisplayed[row] == False: # if row was previously removed
+					# Restore the labels for the fields in the row
+					self.rowsDisplayed[row] = True
+					self.recordLabels[row][0].grid(row=row,column=0) #edit button
+					
+					for column in range(0,len(self.listViewFields)):
+						self.recordLabels[row][column+1].grid(row=row,column=column+1) #fields
+
 				# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 				# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 				# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -249,36 +233,6 @@ class GUI:
 				for column in range(0,len(self.listViewFields)): # num columns (fields)
 					s = self.getRecordFieldData(ID, self.listViewFields[column][0]) #row=ID,column=fieldName
 					self.recordLabels[row][column+1]['text'] = s # 0th column is edit button
-
-	def populateDataList_old(self):
-		# First, clear the container
-		if len(self.dataList.interior.winfo_children()) > 0:
-			for widget in self.dataList.interior.winfo_children():
-				widget.destroy()
-
-		f = ('Courier',12) # font for field data
-		img = PhotoImage(file="editSymbol.gif")
-
-		# populate dataList with some stuff
-		# Note: To add a widget to self.dataList, you need to use 'self.dataList.interior'
-		m = self.pageNum*self.recordsPerPage
-		n = m+self.recordsPerPage
-		if self.numRecords < n:
-			n = self.numRecords
-		for i in range(m,n):
-			# Edit button
-			editButton = Label(self.dataList.interior,image=img,width=2,font=f)
-			editButton.image = img # save the button's image from garbage collection 
-			editButton.grid(row=i,column=0,padx=5,ipadx=0,sticky=E)
-
-			# Rest of the fields as defined in config file
-			index = 1 # first column is the edit button
-			for col in self.listViewFields:
-				# Get field data from database for record i
-				s = self.getRecordFieldData(i,col[0])
-				# Make the label and draw it
-				Label(self.dataList.interior,text=s,width=col[2],font=f).grid(row=i,column=index,padx=5)
-				index = index+1 #increment column index to get next field
 
 
 	def getRecordFieldData(self, row, fieldName):
