@@ -53,13 +53,10 @@ class GUI:
 
 		# Class Variables
 		self.pageNum = 0 # Which page of self.dataList are we looking at
-		self.numRecords = 290
+		self.numRecords = 115
 
-		self.createEasyDatabase()
-		self.getListViewFields()
-
-		# i = self.database[0].fields["ID"]
-		# print(i)
+		self.createEasyDatabase() # fake database for testing gui
+		self.getListViewFields() # get config file settings for list view
 
 		# draw main page
 		self.drawMainPage()
@@ -210,7 +207,7 @@ class GUI:
 		# populate empty labels
 		for row in range(0,self.recordsPerPage): # num rows
 			databaseIndex = self.pageNum * self.recordsPerPage + row
-			if databaseIndex > self.numRecords: # Clear the remaining rows on the last page
+			if databaseIndex >= self.numRecords: # Clear the remaining rows on the last page
 				self.rowsDisplayed[row] = False
 				# Remove (but don't destroy) the labels for the fields in the row
 				self.recordLabels[row][0].grid_remove() #edit button
@@ -235,7 +232,8 @@ class GUI:
 
 				# Add data to each column for the record
 				for col, field in enumerate(self.listViewFields): # num columns (fields)
-					s = self.database[databaseIndex].fields[field[0]]
+					a = self.database[databaseIndex]
+					s = a.fields[field[0]]
 					if field[0] == "ID":
 						s = str(s).zfill(5)
 					else:
@@ -250,27 +248,8 @@ class GUI:
 			self.database[i] = SimpleRecord(i)
 			self.database[i].fillWithFakeData()
 
-
-	def getRecordFieldData(self, row, fieldName):
-		# returns a string
-		if fieldName == "ID":
-			return str(row).zfill(5)
-		elif fieldName == "Name":
-			return "name_"+str(row)
-		elif fieldName == "Qty":
-			return str(random.randint(0,50))
-		elif fieldName == "x":
-			return format(38.900070 + row*0.000001,'.6f')
-		elif fieldName == "y":
-			return format(-77.049630+ row*0.000001,'.6f')
-		elif fieldName == "Date Created":
-			return time.strftime("%Y-%m-%d %H:%M")
-		elif fieldName == "Last Modified":
-			return time.strftime("%Y-%m-%d %H:%M")
-		else:
-			return "N/A"
-
-
+# Fake database for GUI testing
+# Database is an array of SimpleRecord entries
 class SimpleRecord:
 	def __init__(self,ID):
 		# Dictionary of fields, initialize to empty 
