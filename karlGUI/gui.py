@@ -55,7 +55,11 @@ class GUI:
 		self.pageNum = 0 # Which page of self.dataList are we looking at
 		self.numRecords = 290
 
+		self.createEasyDatabase()
 		self.getListViewFields()
+
+		# i = self.database[0].fields["ID"]
+		# print(i)
 
 		# draw main page
 		self.drawMainPage()
@@ -65,17 +69,17 @@ class GUI:
 		# Get all fields selected to be shown in listView
 
 		# TODO: Retrieve from config file
-		# field is a tuple: ("name", "type", number of characters to be displayed)
+		# field is a tuple: ("name", number of characters to be displayed)
 		self.listViewFields = [
-			("ID","int",6),("Name","string",10),
-			("Qty","int",6),("x","float",10),
-			("y","float",10),("Date Created","string",16),
-			("Last Modified","string",16)]
+			("ID",6),("Name",10),
+			("Qty",6),("x",10),
+			("y",10),("Date Created",16),
+			("Last Modified",16)]
 
 		self.listViewFields = [
-			("ID","int",6),("Name","string",10),
-			("Qty","int",6),("Date Created","string",16),
-			("Last Modified","string",16),("Color","string",10),("ID","int",6)]
+			("ID",6),("Name",10),
+			("Qty",6),("Date Created",16),
+			("Last Modified",16),("Color",10),("ID",6)]
 
 	def getFields(self):
 		# Get all fields defined in config file.
@@ -138,7 +142,7 @@ class GUI:
 		
 		index = 1 # first column is blank for the edit button
 		for i in self.listViewFields:
-			Label(self.columnNames,text=str(i[0]),width=i[2],font=f).grid(row=0,column=index,pady=5,padx=5)
+			Label(self.columnNames,text=str(i[0]),width=i[1],font=f).grid(row=0,column=index,pady=5,padx=5)
 			index = index+1
 
 	def drawNavFooter(self):
@@ -196,7 +200,7 @@ class GUI:
 
 			# Draw an empty Label for each field
 			for column, field in enumerate(self.listViewFields, start=1):
-				self.recordLabels[row][column] = Label(self.dataList.interior,text="",width=field[2],font=f)
+				self.recordLabels[row][column] = Label(self.dataList.interior,text="",width=field[1],font=f)
 				self.recordLabels[row][column].grid(row=row,column=column,padx=5)
 		
 		# Boolean array to tell if row is displayed or not (using grid, grid_remove())
@@ -205,8 +209,8 @@ class GUI:
 	def populateDataList(self):
 		# populate empty labels
 		for row in range(0,self.recordsPerPage): # num rows
-			ID = self.pageNum * self.recordsPerPage + row
-			if ID > self.numRecords: # Clear the remaining rows on the last page
+			databaseIndex = self.pageNum * self.recordsPerPage + row
+			if databaseIndex > self.numRecords: # Clear the remaining rows on the last page
 				self.rowsDisplayed[row] = False
 				# Remove (but don't destroy) the labels for the fields in the row
 				self.recordLabels[row][0].grid_remove() #edit button
@@ -230,9 +234,21 @@ class GUI:
 				# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 				# Add data to each column for the record
-				for column in range(0,len(self.listViewFields)): # num columns (fields)
-					s = self.getRecordFieldData(ID, self.listViewFields[column][0]) #row=ID,column=fieldName
-					self.recordLabels[row][column+1]['text'] = s # 0th column is edit button
+				for col, field in enumerate(self.listViewFields): # num columns (fields)
+					s = self.database[databaseIndex].fields[field[0]]
+					if field[0] == "ID":
+						s = str(s).zfill(5)
+					else:
+						s = str(s)
+					# s = self.getRecordFieldData(databaseIndex, self.listViewFields[column][0]) #row=databaseIndex,column=field
+					self.recordLabels[row][col+1]['text'] = s # 0th field is edit button
+
+	def createEasyDatabase(self):
+		# Create a 2D array
+		self.database = [None] * self.numRecords
+		for i in range(0,self.numRecords):
+			self.database[i] = SimpleRecord(i)
+			self.database[i].fillWithFakeData()
 
 
 	def getRecordFieldData(self, row, fieldName):
@@ -253,6 +269,40 @@ class GUI:
 			return time.strftime("%Y-%m-%d %H:%M")
 		else:
 			return "N/A"
+
+
+class SimpleRecord:
+	def __init__(self,ID):
+		# Dictionary of fields, initialize to empty 
+		self.fields = {
+			"ID":ID,
+			"Name":"",
+			"Qty":0,
+			"X":0.0,
+			"Y":0.0,
+			"Date Created":"",
+			"Last Modified":"",
+			"Color":"",
+			"Description":""
+		}
+
+	def fillWithFakeData(self):
+		for key, value in self.fields.items():
+			if key == "Name":
+				self.fields[key] = "name_"+str(self.fields["ID"])
+			elif key == "Qty":
+				self.fields[key] = str(random.randint(0,27))
+			elif key == "X":
+				self.fields[key] = format(38.900070 + self.fields["ID"]*0.000001,'.6f')
+			elif key == "Y":
+				self.fields[key] = format(-77.049630+ self.fields["ID"]*0.000001,'.6f')
+			elif key == "Date Created":
+				self.fields[key] = time.strftime("%Y-%m-%d %H:%M")
+			elif key == "Last Modified":
+				self.fields[key] = time.strftime("%Y-%m-%d %H:%M")
+			elif key == "Description":
+				self.fields[key] = "This is a description for item with id "+str(self.fields["ID"])+"."
+
 
 
 if __name__ == "__main__":
