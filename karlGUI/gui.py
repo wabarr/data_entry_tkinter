@@ -239,7 +239,7 @@ class GUI:
 					self.recordLabels[row][col+1]['text'] = s # 0th field is edit button
 
 	def editButtonCallback(self, event, databaseIndex):
-		print(databaseIndex) # this works
+		print(databaseIndex) # this works 
 
 	def createEasyDatabase(self):
 		# Create a 2D array
