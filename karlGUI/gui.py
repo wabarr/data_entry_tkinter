@@ -36,6 +36,8 @@ TODO:
 * separate gui and database access functions into multiple files
 """
 
+import os
+
 class GUI:
 	def __init__(self, master):
 		self.master = master
@@ -185,7 +187,7 @@ class GUI:
 		for row in range(0,self.recordsPerPage):
 			# Draw the edit button Label
 			self.recordLabels[row][0] = Label(self.dataList.interior,text="",width=0,font=f)
-			img = PhotoImage(file="editSymbol.gif")
+			img = PhotoImage(file=os.path.join(os.path.dirname(os.path.abspath(__file__)), "editSymbol.gif"))
 			self.recordLabels[row][0]['image'] = img # add edit button to column 0
 			self.recordLabels[row][0].image = img
 			self.recordLabels[row][0].grid(row=row,column=0,padx=5,sticky=E)
