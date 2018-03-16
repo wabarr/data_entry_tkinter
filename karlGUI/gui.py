@@ -27,14 +27,13 @@ import time, random, math, threading
 
 """
 TODO:
-* optimize widget destroy for listViewTab
 * arrow keys/scroll wheel for navigation
-* column Configuration
 * go to specific page in page navigation
 * search bar
 * edit record button
 * Add dataEntry
 	- update self.numRecords, self.numRecordsLabel upon save of entry
+* separate gui and database access functions into multiple files
 """
 
 class GUI:
@@ -122,10 +121,6 @@ class GUI:
 		self.drawColumnNames()
 		self.drawRecordRows()
 		self.drawNavFooter()
-
-	def destroyListViewTab(self):
-		for widget in frame.winfo_children():
-			widget.destroy()
 
 	def drawColumnNames(self):
 		# Draw column names on listViewTab specified in config file
@@ -226,20 +221,23 @@ class GUI:
 				# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 				# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 				# TODO: Add event binding to edit button here!
+				self.recordLabels[row][0].bind("<Button-1>", lambda event, arg=databaseIndex: self.editButtonCallback(event, arg))
 				# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 				# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 				# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 				# Add data to each column for the record
 				for col, field in enumerate(self.listViewFields): # num columns (fields)
-					a = self.database[databaseIndex]
-					s = a.fields[field[0]]
+					s = self.database[databaseIndex].fields[field[0]]
 					if field[0] == "ID":
 						s = str(s).zfill(5)
 					else:
 						s = str(s)
 					# s = self.getRecordFieldData(databaseIndex, self.listViewFields[column][0]) #row=databaseIndex,column=field
 					self.recordLabels[row][col+1]['text'] = s # 0th field is edit button
+
+	def editButtonCallback(self, event, databaseIndex):
+		print(databaseIndex) # this works
 
 	def createEasyDatabase(self):
 		# Create a 2D array
