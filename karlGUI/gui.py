@@ -49,6 +49,8 @@ class GUI:
 		# self.master.maxsize(width = 600, height = 400)
 		self.master.geometry('800x600')
 
+		self.getFields()
+
 		# GUI settings
 		self.recordsPerPage = 50 # if more than 50 and rendering is SLOW
 
@@ -82,12 +84,16 @@ class GUI:
 	def getFields(self):
 		# Get all fields defined in config file.
 		# All of these fields will be shown in dataEntryTab.
-		pass
+		x = SimpleRecord(-1)
+		self.fields = []
+		for key,value in x.fields.items():
+			self.fields.append(key)
 
 	# This method calls the other draw methods
 	def drawMainPage(self):
 		self.drawNoteBook()
 		self.drawListViewTab()
+		# self.drawDataEntryTab() # BUG!!!!!!!! Runtime error (freeze)!!!!
 		self.populateDataList()
 
 	def drawNoteBook(self):
@@ -105,8 +111,8 @@ class GUI:
 		Label(self.dataEntryTab,text="Enter data here. This will create a new\nrow in the list view with a unique ID.").pack()
 
 	def drawListViewTab(self):
-		for widget in self.listViewTab.winfo_children():
-			widget.destroy()
+		# for widget in self.listViewTab.winfo_children():
+		# 	widget.destroy()
 
 		# Create the container frames in the list view tab
 		self.columnNames = Frame(self.listViewTab)
@@ -123,6 +129,11 @@ class GUI:
 		self.drawColumnNames()
 		self.drawRecordRows()
 		self.drawNavFooter()
+
+	def drawDataEntryTab(self):
+		f = ('Times',14,'bold') # font for column names
+		for row, field in enumerate(self.fields): # num columns (fields)
+			Label(self.dataEntryTab,text=field,width=10,font=f).grid(row=row,column=0,pady=10,padx=10)
 
 	def drawColumnNames(self):
 		# Draw column names on listViewTab specified in config file
@@ -239,7 +250,13 @@ class GUI:
 					self.recordLabels[row][col+1]['text'] = s # 0th field is edit button
 
 	def editButtonCallback(self, event, databaseIndex):
-		print(databaseIndex) # this works 
+		print(databaseIndex) # this works
+		self.notebook.select(self.dataEntryTab) #switch over to dataEntryTab
+
+		####### After 2 seconds, switch back #######
+		# self.master.update()
+		# self.master.after(2000)
+		# self.notebook.select(self.listViewTab)
 
 	def createEasyDatabase(self):
 		# Create a 2D array
