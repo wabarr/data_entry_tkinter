@@ -19,7 +19,7 @@ from tkinter.ttk import *
 from VerticalScrolledFrame import *
 
 # other stuff
-import time, random, math, threading
+import time, random, math, threading, os
 
 # Important development tips:
 #   - To add a widget to a VerticalScrolledFrame v, you must use 'v.interior'
@@ -36,7 +36,6 @@ TODO:
 * separate gui and database access functions into multiple files
 """
 
-import os
 
 class GUI:
 	def __init__(self, master):
@@ -49,16 +48,15 @@ class GUI:
 		# self.master.maxsize(width = 600, height = 400)
 		self.master.geometry('800x600')
 
-		self.getFields()
-
 		# GUI settings
-		self.recordsPerPage = 50 # if more than 50 and rendering is SLOW
+		self.recordsPerPage = 50 # if > 50, rendering is SLOW
 
 		# Class Variables
-		self.pageNum = 0 # Which page of self.dataList are we looking at
+		self.pageNum = 0 # Variable for which page of self.dataList are we viewing
 		self.numRecords = 115
 
-		self.createEasyDatabase() # fake database for testing gui
+		self.createEasyDatabase() # fake database for testing GUI
+		self.getFields()
 		self.getListViewFields() # get config file settings for list view
 
 		# draw main page
@@ -93,7 +91,7 @@ class GUI:
 	def drawMainPage(self):
 		self.drawNoteBook()
 		self.drawListViewTab()
-		# self.drawDataEntryTab() # BUG!!!!!!!! Runtime error (freeze)!!!!
+		self.drawDataEntryTab()
 		self.populateDataList()
 
 	def drawNoteBook(self):
@@ -108,7 +106,6 @@ class GUI:
 
 		# Draw the notebook
 		self.notebook.pack(side=TOP,fill=BOTH,expand=True)
-		Label(self.dataEntryTab,text="Enter data here. This will create a new\nrow in the list view with a unique ID.").pack()
 
 	def drawListViewTab(self):
 		# for widget in self.listViewTab.winfo_children():
@@ -132,8 +129,9 @@ class GUI:
 
 	def drawDataEntryTab(self):
 		f = ('Times',14,'bold') # font for column names
-		for row, field in enumerate(self.fields): # num columns (fields)
-			Label(self.dataEntryTab,text=field,width=10,font=f).grid(row=row,column=0,pady=10,padx=10)
+		for row, field in enumerate(self.fields): # num rows (fields)
+			Label(self.dataEntryTab,text=field,width=12,font=f).grid(row=row,column=0,pady=5,padx=5)
+			Entry(self.dataEntryTab,width=20).grid(row=row,column=1,pady=5,padx=5)
 
 	def drawColumnNames(self):
 		# Draw column names on listViewTab specified in config file
@@ -269,7 +267,7 @@ class GUI:
 # Database is an array of SimpleRecord entries
 class SimpleRecord:
 	def __init__(self,ID):
-		# Dictionary of fields, initialize to empty 
+		# Dictionary of fields, initialize to empty, (key:value)
 		self.fields = {
 			"ID":ID,
 			"Name":"",
