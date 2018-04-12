@@ -1,24 +1,19 @@
 # Karl Preisner
-# 7 March 2018
+# 12 April 2018
 
-""" 
-Current version:
-- check list controls dynamic visibility of fields
-"""
-
-# Reference for downloaded icon:
+# Reference for downloaded "edit button" icon:
 # <div>Icons made by <a href="http://www.freepik.com" title="Freepik">Freepik</a> 
 # from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> 
 # is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative 
 # Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
 
-# tkinter stuff
+# Import tkinter stuff
 from tkinter import *
 import tkinter as tk
 from tkinter.ttk import *
 from VerticalScrolledFrame import *
 
-# other stuff
+# Import other stuff
 import time, random, math, threading, os
 
 # Important development tips:
@@ -27,13 +22,19 @@ import time, random, math, threading, os
 
 """
 TODO:
-* arrow keys/scroll wheel for navigation
-* go to specific page in page navigation
-* search bar
-* edit record button
-* Add dataEntry
+* List View Tab
+	- arrow keys/scroll wheel for navigation
+	- go to specific page in page navigation
+	- search bar
+* Data Entry Tab
+	- data from database record
+	- delete record button & functionality
 	- update self.numRecords, self.numRecordsLabel upon save of entry
-* separate gui and database access functions into multiple files
+* Separate gui and database access functions into multiple files
+* Config file
+	- getListViewFields()
+	- getFields()
+	- recordsPerPage
 """
 
 
@@ -48,7 +49,7 @@ class GUI:
 		# self.master.maxsize(width = 600, height = 400)
 		self.master.geometry('800x600')
 
-		# GUI settings
+		# GUI settings (Put this in the config file in the future)
 		self.recordsPerPage = 50 # if > 50, rendering is SLOW
 
 		# Class Variables
@@ -81,6 +82,7 @@ class GUI:
 
 	def getFields(self):
 		# Get all fields defined in config file.
+		# TODO: Retrieve from config file
 		# All of these fields will be shown in dataEntryTab.
 		x = SimpleRecord(-1)
 		self.fields = []
@@ -108,9 +110,6 @@ class GUI:
 		self.notebook.pack(side=TOP,fill=BOTH,expand=True)
 
 	def drawListViewTab(self):
-		# for widget in self.listViewTab.winfo_children():
-		# 	widget.destroy()
-
 		# Create the container frames in the list view tab
 		self.columnNames = Frame(self.listViewTab)
 		self.dataList = VerticalScrolledFrame(self.listViewTab)
@@ -135,10 +134,17 @@ class GUI:
 
 	def drawColumnNames(self):
 		# Draw column names on listViewTab specified in config file
+		#--------------------------------------------------
+		# Below code will only be necessary if the user wants to modify the
+		# config file while the program is running. Easiest method to 
+		# require the user to restart the program if they modify the 
+		# config file.
+		#--------------------------------------------------
 		# First, clear the container
-		if len(self.columnNames.winfo_children()) > 0:
-			for widget in self.columnNames.winfo_children():
-				widget.destroy()
+		# if len(self.columnNames.winfo_children()) > 0:
+		# 	for widget in self.columnNames.winfo_children():
+		# 		widget.destroy()
+		#--------------------------------------------------
 
 		f = ('Courier',12,'bold') # font for column names
 		Label(self.columnNames,text="  ",width=2,font=f).grid(row=0,column=0,pady=5,padx=4) #edit button
@@ -170,22 +176,6 @@ class GUI:
 		previousPage.bind("<Button-1>", self.previousPageCallback)
 		nextPage.bind("<Button-1>", self.nextPageCallback)
 
-	def previousPageCallback(self,event):
-		if self.pageNum > 0:
-			self.pageNum = self.pageNum - 1
-			n = math.ceil(self.numRecords/self.recordsPerPage) # get num pages
-			self.currentPageLabel['text'] = "Page "+str(self.pageNum+1)+" of "+str(n)
-			self.populateDataList()
-			self.dataList.canvas.yview_moveto(0) # scroll to top when page is changed
-
-	def nextPageCallback(self,event):
-		if (self.pageNum+1)*self.recordsPerPage < self.numRecords:
-			self.pageNum = self.pageNum + 1
-			n = math.ceil(self.numRecords/self.recordsPerPage) # get num pages
-			self.currentPageLabel['text'] = "Page "+str(self.pageNum+1)+" of "+str(n)
-			self.populateDataList()
-			self.dataList.canvas.yview_moveto(0) # scroll to top when page is changed
-
 	def drawRecordRows(self):
 		f = ('Courier',12) # font for field data
 
@@ -209,16 +199,36 @@ class GUI:
 		# Boolean array to tell if row is displayed or not (using grid, grid_remove())
 		self.rowsDisplayed = [True] * self.recordsPerPage
 
+#############################################################################
+######### Below functions are called multiple times during runtime. #########
+#############################################################################
+	def previousPageCallback(self,event):
+		if self.pageNum > 0:
+			self.pageNum = self.pageNum - 1
+			n = math.ceil(self.numRecords/self.recordsPerPage) # get num pages
+			self.currentPageLabel['text'] = "Page "+str(self.pageNum+1)+" of "+str(n)
+			self.populateDataList()
+			self.dataList.canvas.yview_moveto(0) # scroll to top when page is changed
+
+	def nextPageCallback(self,event):
+		if (self.pageNum+1)*self.recordsPerPage < self.numRecords:
+			self.pageNum = self.pageNum + 1
+			n = math.ceil(self.numRecords/self.recordsPerPage) # get num pages
+			self.currentPageLabel['text'] = "Page "+str(self.pageNum+1)+" of "+str(n)
+			self.populateDataList()
+			self.dataList.canvas.yview_moveto(0) # scroll to top when page is changed
+
 	def populateDataList(self):
-		# populate empty labels
+		# populate labels in listViewTab with data from database
+		databaseIndex = -1 # initialize
 		for row in range(0,self.recordsPerPage): # num rows
 			databaseIndex = self.pageNum * self.recordsPerPage + row
 			if databaseIndex >= self.numRecords: # Clear the remaining rows on the last page
 				self.rowsDisplayed[row] = False
 				# Remove (but don't destroy) the labels for the fields in the row
-				self.recordLabels[row][0].grid_remove() #edit button
+				self.recordLabels[row][0].grid_remove() # remove edit button
 				for column in range(0,len(self.listViewFields)):
-					self.recordLabels[row][column+1].grid_remove() #fields
+					self.recordLabels[row][column+1].grid_remove() # remove fields
 			else: # row is displayed
 				if self.rowsDisplayed[row] == False: # if row was previously removed
 					# Restore the labels for the fields in the row
@@ -237,15 +247,22 @@ class GUI:
 				# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 				# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+				# Get record at databaseIndex
+				record = self.getDatabaseEntry(databaseIndex)
+
 				# Add data to each column for the record
 				for col, field in enumerate(self.listViewFields): # num columns (fields)
-					s = self.database[databaseIndex].fields[field[0]]
+					s = record.fields[field[0]]
+					# s = self.database[databaseIndex].fields[field[0]]
 					if field[0] == "ID":
 						s = str(s).zfill(5)
 					else:
 						s = str(s)
 					# s = self.getRecordFieldData(databaseIndex, self.listViewFields[column][0]) #row=databaseIndex,column=field
 					self.recordLabels[row][col+1]['text'] = s # 0th field is edit button
+
+	def getDatabaseEntry(self, databaseIndex):
+		return self.database[databaseIndex]
 
 	def editButtonCallback(self, event, databaseIndex):
 		print(databaseIndex) # this works
